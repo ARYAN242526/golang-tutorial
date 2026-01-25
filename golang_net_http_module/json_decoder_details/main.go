@@ -44,7 +44,7 @@ func testHandler(w http.ResponseWriter , r * http.Request) {
 	if req.Name == "" {
 		writeJSON(w ,http.StatusBadRequest, map[string]any{
 			"ok" : false,
-			"error" : "nmae must not be empty",
+			"error" : "name must not be empty",
 		})
 		return
 	}
