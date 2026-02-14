@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Repository -> data access layer
@@ -59,4 +61,20 @@ func (r *Repo) List(ctx context.Context) ([]Note , error) {
 	}
 
 	return notes , nil
+}
+
+func (r *Repo) GetByID(ctx context.Context , id primitive.ObjectID) (Note , error) {
+	opCtx , cancel := context.WithTimeout(ctx, 5 * time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id" : id}
+
+	var note Note
+	
+	err := r.coll.FindOne(opCtx, filter , options.FindOne()).Decode(&note)
+	if err != nil {
+		return Note{}, fmt.Errorf("Find note by ID failed: %w" , err)
+	}
+
+	return note , nil
 }
