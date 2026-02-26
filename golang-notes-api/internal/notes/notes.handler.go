@@ -97,3 +97,70 @@ func (h *Handler) GetNoteByID(c *gin.Context){
 	c.JSON(http.StatusOK , note)
 
 }
+
+func (h *Handler) UpdateNoteByID( c *gin.Context) {
+	idStr := c.Param("id")
+
+	objId , err := primitive.ObjectIDFromHex(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest , gin.H{
+			"error" : "Invalid ID",
+		})
+		return
+	}
+	
+	var req UpdateNoteRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest , gin.H{
+			"error" : "Invalid JSON format",
+		})
+		return
+	}
+
+	updated , err := h.repo.UpdateByID(c.Request.Context() , objId , req)
+	if err != nil {
+		if errors.Is(err , mongo.ErrNoDocuments) {
+			c.JSON(http.StatusNotFound , gin.H{
+				"error" : "Note not found for that given ID",
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError , gin.H{
+			"error" : "Failed to update the note",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK , updated)
+}
+
+func (h *Handler) DeleteNoteByID(c* gin.Context){
+	idStr := c.Param("id")
+
+	objId , err := primitive.ObjectIDFromHex(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest , gin.H{
+			"error" : "Invalid ID",
+		})
+		return
+	}
+
+	deleted , err := h.repo.DeleteByID(c.Request.Context() , objId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError , gin.H{
+			"error" : "Failed to delete the note",
+		})
+		return
+	}
+
+	if !deleted {
+		c.JSON(http.StatusNotFound , gin.H{
+			"error" : "Note not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK , gin.H{"ok" : true})
+}
